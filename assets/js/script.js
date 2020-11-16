@@ -147,6 +147,81 @@ $(".list-group").on("blur", "input[type='text']", function() {
   $(this).replaceWith(taskSpan);
 });
 
+// ------------------------------------------ make  cards dragable and update ------------------------------------------
+$(".card .list-group").sortable({
+  connectWith: $(".card .list-group"), // this turns everything with in the class list-group into 
+  // a sortable list.  The connectWith property then linked these sortable lists with any other lists that have the same class
+  scroll: false,
+  tolerance: "pointer",
+  helper: "clone",
+  activate: function(event) { // activate event triggers once for all connected lists as soon as the dragging starts
+    console.log("activate", this);
+  },
+  deactivate: function(event) { // deactivate event triggers once for all connected lists as soon as the dragging ends
+    console.log("deactiveate", this);
+  },
+  over: function(event) { // over event triggers when a dragged item enters a connected list (still not released though)
+    console.log("over", event.target);
+  },
+  out: function(event) { // out event triggers when a dragged item leaves a connected list (still not released though)
+    console.log("out", event.target);
+  },
+  update: function(event) { // update event triggers when the contents of a lost have changed (when item reordered, removed or added)
+    // loop over current set of children in sortable list.
+
+    // array to store the task data in
+    var tempArr = [];
+    
+    // loop over currrent set of children in sortable list
+    $(this).children().each(function() { // the children method returns an array of the list element's children (the li element), labeled as li.list-group-item
+    // this loop will run a callback function for every item/element in the array.
+    // the date and text will be saved in the variables.  This information will then be used to push to local storage
+      var text = $(this) // $(this) refers to the child element at that index
+        .find("p")
+        .text()
+        .trim();
+      
+      var date = $(this) // $(this) refers to the child element at that index
+        .find("span")
+        .text()
+        .trim();
+        
+      // add task data to the temp array as an object
+      tempArr.push( {
+        text: text,
+        date: date
+      });
+    });
+
+    // trim down list's ID to match object property
+    var arrName = $(this)
+      .attr("id")
+      .replace("list-", "");
+    
+    // update array on tasks object and save
+    tasks[arrName] = tempArr;
+    saveTasks();
+
+    console.log(tempArr);
+  }
+});
+
+// ------------------------------------------ Droppable Trash ------------------------------------------
+$("#trash").droppable({
+  accept: ".card .list-group-item",
+  tolerance: "touch",
+  drop: function(event, ui) { /// event triggered when draggable object is dropped
+    console.log("drop");
+    ui.draggable.remove(); // removes the DOM object.  works just like js remove()
+  },
+  over: function(event, ui) { // over event triggers when a dragged item enters a connected list (still not released though)
+    console.log("over");
+  },
+  out: function(event, ui) { // triggered when draggable is dragged ober a droppable
+    console.log("out");
+  }
+});
+
 
 // modal was triggered
 $("#task-form-modal").on("show.bs.modal", function() {
