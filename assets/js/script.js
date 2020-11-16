@@ -3,9 +3,11 @@ var tasks = {};
 var createTask = function(taskText, taskDate, taskList) {
   // create elements that make up a task item
   var taskLi = $("<li>").addClass("list-group-item");
+  
   var taskSpan = $("<span>")
     .addClass("badge badge-primary badge-pill")
     .text(taskDate);
+ 
   var taskP = $("<p>")
     .addClass("m-1")
     .text(taskText);
@@ -13,6 +15,8 @@ var createTask = function(taskText, taskDate, taskList) {
   // append span and p element to parent li
   taskLi.append(taskSpan, taskP);
 
+  // check due date - this was added later when we are adding the functionality to have the color change based on the due date
+  auditTask(taskLi);
 
   // append to ul list on the page
   $("#list-" + taskList).append(taskLi);
@@ -112,12 +116,19 @@ $(".list-group").on("click", "span", function() {
   // swap out elements
   $(this).replaceWith(dateInput);
 
+  // added later to incorporate the select a date
+  // enable jquery ui datepicker
+  dateInput.datepicker({
+    mindate: 1
+  });
+
   // automatically focus on new element
   dateInput.trigger("focus");
 });
 
-// value of due date was changed
-$(".list-group").on("blur", "input[type='text']", function() {
+// value of due date was changed.  used to be a blur event, but with the date picker, blur was changed to change
+// value will update with the assistance of the dateInput.datepicker () function (on close)
+$(".list-group").on("change", "input[type='text']", function() {
   // get current text
   var date = $(this)
     .val()
@@ -145,6 +156,9 @@ $(".list-group").on("blur", "input[type='text']", function() {
 
   // replace input with span element
   $(this).replaceWith(taskSpan);
+
+  // pass task's <li> element into auditTask() to check new due date  (this was added at the same time as the audit function)
+  auditTask($(taskSpan).closest(".list-group-item"));
 });
 
 // ------------------------------------------ make  cards dragable and update ------------------------------------------
@@ -221,6 +235,42 @@ $("#trash").droppable({
     console.log("out");
   }
 });
+
+// ------------------------------------------ Date Picker ------------------------------------------
+$("#modalDueDate").datepicker({
+  minDate: 1, // makes it so that the date chosen must be at least one day away
+  onClose: function() { // allows up to execute a function when the date picker closes.
+    // when calendar is closed, force a "change" event on the `dateInput`
+    $(this).trigger("change");
+  }
+});
+
+// ------------------------------------------ Audit Task for Due Date (color change) ------------------------------------------
+var auditTask = function(taskEl) {
+  // get date from task element
+  var date = $(taskEl).find("span").text().trim();
+ 
+  // convert the moment object at 5:00pm of whatever the date is (this will become a cut off point)
+  var time = moment(date, "L").set("hour", 17);
+  // this should print out an object for the value of the date variable, but at 5:00pm of that date
+  
+  // remove any old classes from element
+  $(taskEl).removeClass("list-group-item-warning list-group-item-danger");
+
+  // apply new class if task is near/over due date
+  if (moment().isAfter(time)) { // query method - this performs a single true or false check on the data to gather more information about it
+    // isAfter gets the current time from moment() and checks it that values comes later than the value of the time variable
+    $(taskEl).addClass("list-group-item-danger");
+  }
+  else if (Math.abs(moment().diff(time, "days")) <= 2) { // if the date difference is less than or equal to 2 days away, then a warning color is issued.
+    $(taskEl).addClass("list-group-item-warning");
+  }
+};
+
+
+
+
+
 
 
 // modal was triggered
