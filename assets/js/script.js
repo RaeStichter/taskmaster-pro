@@ -169,15 +169,21 @@ $(".card .list-group").sortable({
   tolerance: "pointer",
   helper: "clone",
   activate: function(event) { // activate event triggers once for all connected lists as soon as the dragging starts
+    $(this).addClass("dropover"); // added as part of the later enhancements to create an effect when moved.
+    $(".bottom-trash").addClass("bottom-trash-drag"); // jquery to select the class from html and add class
     console.log("activate", this);
   },
   deactivate: function(event) { // deactivate event triggers once for all connected lists as soon as the dragging ends
+    $(this).removeClass("dropover"); // added as part of the later enhancements to create an effect when moved.
+    $(".bottom-trash").removeClass("bottom-trash-drag"); // jquery to select the class from html and remove class
     console.log("deactiveate", this);
   },
   over: function(event) { // over event triggers when a dragged item enters a connected list (still not released though)
+    $(event.target).addClass("dropover-active"); // added as part of the later enhancements to create an effect when moved.
     console.log("over", event.target);
   },
   out: function(event) { // out event triggers when a dragged item leaves a connected list (still not released though)
+    $(event.target).removeClass("dropover-active"); // added as part of the later enhancements to create an effect when moved.
     console.log("out", event.target);
   },
   update: function(event) { // update event triggers when the contents of a lost have changed (when item reordered, removed or added)
@@ -225,13 +231,16 @@ $("#trash").droppable({
   accept: ".card .list-group-item",
   tolerance: "touch",
   drop: function(event, ui) { /// event triggered when draggable object is dropped
+    $(".bottom-trash").removeClass("bottom-trash-active"); // jquery to select the class from html remove add class
     console.log("drop");
     ui.draggable.remove(); // removes the DOM object.  works just like js remove()
   },
   over: function(event, ui) { // over event triggers when a dragged item enters a connected list (still not released though)
+    $(".bottom-trash").addClass("bottom-trash-active"); // jquery to select the class from html and add class
     console.log("over");
   },
   out: function(event, ui) { // triggered when draggable is dragged ober a droppable
+    $(".bottom-trash").removeClass("bottom-trash-active"); // jquery to select the class from html remove add class
     console.log("out");
   }
 });
@@ -265,6 +274,8 @@ var auditTask = function(taskEl) {
   else if (Math.abs(moment().diff(time, "days")) <= 2) { // if the date difference is less than or equal to 2 days away, then a warning color is issued.
     $(taskEl).addClass("list-group-item-warning");
   }
+
+  console.log(taskEl);
 };
 
 
@@ -286,7 +297,7 @@ $("#task-form-modal").on("shown.bs.modal", function() {
 });
 
 // save button in modal was clicked
-$("#task-form-modal .btn-primary").click(function() {
+$("#task-form-modal .btn-save").click(function() { // was originally the btn-primary, but changed to btn-save for gradient customization
   // get form values
   var taskText = $("#modalTaskDescription").val();
   var taskDate = $("#modalDueDate").val();
@@ -320,3 +331,13 @@ $("#remove-tasks").on("click", function() {
 loadTasks();
 
 
+// ------------------------------------------ Timer ------------------------------------------
+// here, the jQuery selector passes each element it finds using the selector into the callback function, 
+// and that element is expressed in the el arguement of the function.  auditTask() then passes the element
+// to its routines using the el argument.  We loop over every task on the page with a class of
+// list-group-item and execute the auditTask() function to check the due date of each one.
+setInterval(function () {
+  $(".card .list-group-item").each(function(index, el) {
+    auditTask(el);
+  });
+}, (1000 * 60) * 30); //execute every 30 minutes.  1000ms*60seconds*30 minutes
